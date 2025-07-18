@@ -1,0 +1,88 @@
+# Envoy Body-to-Header Dynamic Module Project
+
+## Project Structure Rules
+
+This is a Rust-based Envoy dynamic module project located at the root level (not in dynamic-modules-examples/).
+
+### Key Files and Directories
+
+- `src/` - Rust source code for the dynamic module
+  - `lib.rs` - Main module entry point with init and filter registration functions
+  - `logging_passthrough.rs` - Logging passthrough filter implementation
+- `.cargo/config.toml` - macOS compatibility configuration for dynamic linking
+- `Cargo.toml` - Rust project configuration with Envoy SDK dependency
+- `Dockerfile` - Multi-arch Docker build for Envoy + module
+- `envoy.yaml` - Envoy configuration for testing the module
+- `README.md` - Build and usage instructions
+
+### Ignored Directories
+
+- `.specstory/` - Should be ignored for obvious reasons
+- `dynamic-modules-examples/` - Reference examples, don't modify
+
+## Development Rules
+
+### Rust Module Development
+
+1. **SDK Version Compatibility**: The Envoy SDK version in Cargo.toml must match the Envoy version in Dockerfile (currently: 73fe00fc139fd5053f4c4a5d66569cc254449896)
+
+2. **Library Name**: The module builds as `libbody_to_header_module.so` (configured in Cargo.toml `[lib]` section)
+
+3. **Filter Registration**: All new filters must be:
+   - Added as modules in `src/lib.rs`
+   - Registered in the `new_http_filter_config_fn` match statement
+   - Follow the naming pattern: `filter_name` in Envoy config maps to module name
+
+4. **Logging Conventions**: 
+   - Use `[BODY_TO_HEADER]` prefix for all logs
+   - Include request ID for tracing when possible
+   - Use `eprintln!` for logging (goes to stderr)
+
+### Building and Testing
+
+1. **Local Development**:
+   - Use `cargo build` for development builds
+   - Use `cargo test` to run unit tests
+   - Use `cargo fmt` and `cargo clippy` for code quality
+
+2. **Docker Builds**:
+   - `docker buildx build . -t envoy-body-to-header:latest` for single arch
+   - Add `--platform linux/amd64,linux/arm64` for multi-arch builds
+   - Docker build handles cross-compilation via cargo-zigbuild
+
+3. **Testing Setup**:
+   - Envoy runs on port 8080 (main proxy)
+   - Admin interface on port 9901
+   - Test against httpbin.org backend
+   - Use curl commands from README for manual testing
+
+## Configuration Rules
+
+### Envoy Configuration
+
+- Module name in envoy.yaml must match library name: `body_to_header_module`
+- Filter name must match registered filter: `logging_passthrough`
+- Use dynamic module search path: `/usr/local/lib` (set in Dockerfile)
+
+### Filter Configuration
+
+- Filters should accept JSON configuration via `filter_config`
+- Parse configuration in the FilterConfig::new() method
+- Return None from FilterConfig::new() if configuration is invalid
+
+## Future Development
+
+This is a proof-of-concept. When extending:
+
+1. Keep it simple - this is for learning and experimentation
+2. Add new filters as separate modules in `src/`
+3. Follow the same pattern as `logging_passthrough.rs`
+4. Update `lib.rs` to register new filters
+5. Update `envoy.yaml` to configure new filters
+6. Update README.md with new functionality
+
+## Key Dependencies
+
+- envoy-proxy-dynamic-modules-rust-sdk (from Envoy repo)
+- serde + serde_json for configuration parsing
+- cargo-zigbuild for cross-compilation (Docker only) 

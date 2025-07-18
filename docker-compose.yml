@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  httpbin:
+    image: kennethreitz/httpbin
+    ports:
+      - "8081:80"
+
+  envoy:
+    build: .
+    ports:
+      - "8080:8080"  # Main proxy port
+      - "9901:9901"  # Admin interface
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+    command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    depends_on:
+      - httpbin
+    environment:
+      - ENVOY_DYNAMIC_MODULES_SEARCH_PATH=/usr/local/lib 
