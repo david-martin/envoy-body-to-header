@@ -1,0 +1,47 @@
+# Configuration Standards
+
+## Envoy Configuration ([envoy.yaml](mdc:envoy.yaml))
+
+### Dynamic Module Setup
+- Module name: `body_to_header_module` (matches library name in [Cargo.toml](mdc:Cargo.toml))
+- Filter name: `body_based_routing` (matches Rust module registration)
+- Search path: `/usr/local/lib` (set in [Dockerfile](mdc:Dockerfile))
+
+### Route Configuration Pattern
+```yaml
+routes:
+  # Specific route for echo2 (header-based)
+  - match:
+      prefix: "/"
+      headers:
+        - name: "x-route-to"
+          string_match:
+            exact: "echo2"
+    route:
+      cluster: echo2
+  # Default route to echo1
+  - match:
+      prefix: "/"
+    route:
+      cluster: echo1
+```
+
+## Docker Compose ([docker-compose.yml](mdc:docker-compose.yml))
+
+### Test Environment Setup
+- `echo1` service on port 8001 (default route)
+- `echo2` service on port 8002 (when method contains "echo2")  
+- `envoy` service on port 8080 (main proxy)
+- Health checks disabled to reduce log noise
+
+## Build Configuration
+
+### Cargo.toml Requirements
+- Library name: `body_to_header_module` (matches Envoy config)
+- Crate type: `["cdylib"]` for dynamic library
+- SDK version: Must match Envoy version in [Dockerfile](mdc:Dockerfile)
+
+### Docker Build
+- Multi-arch support (amd64/arm64) via cargo-zigbuild
+- Cross-compilation for both architectures
+- Copies correct architecture-specific .so file to final image

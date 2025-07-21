@@ -1,0 +1,47 @@
+# Rust Development Standards for Envoy Dynamic Modules
+
+## Code Quality Standards
+- **Production-ready code**: Minimal, focused, no unnecessary logging
+- **No compiler warnings**: Code must compile cleanly
+- **Memory efficiency**: Consider request body buffering impact
+- **Performance**: JSON parsing adds latency, optimize accordingly
+
+## Envoy SDK Patterns
+
+### Filter Registration in [src/lib.rs](mdc:src/lib.rs)
+```rust
+match filter_name {
+    "body_based_routing" => Some(Box::new(body_based_routing::FilterConfig::new(filter_config))),
+    _ => None
+}
+```
+
+### Critical HTTP Filter Methods
+Only implement essential methods:
+- `on_request_headers` - For pausing header processing
+- `on_request_body` - For body analysis and routing decisions
+
+### Essential Return Values
+- `StopIteration` - Pause processing (headers phase)
+- `StopIterationAndBuffer` - Buffer body chunks (body phase)  
+- `Continue` - Resume normal processing
+
+### Routing Implementation Pattern
+```rust
+// Default route
+let mut route_to = "echo1";
+
+// Analyze body and potentially change route
+if method.contains("echo2") {
+    route_to = "echo2";
+}
+
+// Set header and clear cache
+envoy_filter.set_request_header("x-route-to", route_to.as_bytes());
+envoy_filter.clear_route_cache(); // CRITICAL: Forces route re-evaluation
+```
+
+## Dependencies
+- `envoy-proxy-dynamic-modules-rust-sdk` - Pinned to specific commit
+- `serde` + `serde_json` - For configuration and JSON parsing
+- Keep dependencies minimal

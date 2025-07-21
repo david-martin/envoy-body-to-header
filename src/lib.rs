@@ -1,6 +1,6 @@
 use envoy_proxy_dynamic_modules_rust_sdk::*;
 
-mod logging_passthrough;
+mod body_based_routing;
 
 declare_init_functions!(init, new_http_filter_config_fn);
 
@@ -34,7 +34,7 @@ fn new_http_filter_config_fn<EC: EnvoyHttpFilterConfig, EHF: EnvoyHttpFilter>(
     eprintln!("[BODY_TO_HEADER] Creating filter: {}, config: {}", filter_name, filter_config);
     
     match filter_name {
-        "logging_passthrough" => Some(Box::new(logging_passthrough::FilterConfig::new(filter_config))),
+        "body_based_routing" => Some(Box::new(body_based_routing::FilterConfig::new(filter_config))),
         _ => {
             eprintln!("[BODY_TO_HEADER] Unknown filter name: {}", filter_name);
             None

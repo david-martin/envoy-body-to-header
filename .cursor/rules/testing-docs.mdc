@@ -1,0 +1,52 @@
+# Testing and Documentation Standards
+
+## Documentation Philosophy ([README.md](mdc:README.md))
+- **Minimal and actionable** - Focus on getting users running quickly
+- **No lengthy explanations** - Code and config files demonstrate functionality
+- **Essential test commands only** - 2 curl examples are sufficient
+- **Reference configuration** - Point users to [envoy.yaml](mdc:envoy.yaml) for details
+
+### README Structure
+1. Brief description (what it does)
+2. Quick start (docker-compose + test curls)
+3. Service ports (what's running where)
+4. Basic build commands
+5. Reference to config files
+
+## Testing Standards
+
+### Local Testing Commands
+```bash
+# Build and start everything
+docker-compose up --build
+
+# Test routing to echo2
+curl -X POST http://localhost:8080/ \
+  -H "Content-Type: application/json" \
+  -d '{"method": "echo2", "data": "test"}'
+
+# Test default routing to echo1  
+curl -X POST http://localhost:8080/ \
+  -H "Content-Type: application/json" \
+  -d '{"method": "anything", "data": "test"}'
+```
+
+### Code Quality Checks
+```bash
+cargo build       # Must compile without warnings
+cargo test        # All tests must pass
+cargo fmt         # Format code
+cargo clippy      # Lint code
+```
+
+### Test Environment
+- Port 8080: Envoy proxy (main entry point)
+- Port 8001: Echo server 1 (default route) 
+- Port 8002: Echo server 2 (echo2 route)
+- Port 9901: Envoy admin interface
+
+## Production Considerations
+- **Body buffering**: Complete request bodies held in memory
+- **Latency impact**: JSON parsing adds processing time
+- **Memory scaling**: Usage grows with request body size
+- **Route cache**: Clearing forces re-evaluation (small cost)

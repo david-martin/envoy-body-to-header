@@ -3,6 +3,11 @@ name = "envoy-body-to-header"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
+description = "Envoy dynamic module for body-based routing - routes requests to different upstream clusters based on request body content"
+authors = ["Envoy Community"]
+repository = "https://github.com/envoyproxy/envoy-body-to-header"
+keywords = ["envoy", "proxy", "routing", "http", "dynamic-modules"]
+categories = ["web-programming", "network-programming"]
 
 [dependencies]
 # The SDK version must match the Envoy version due to the strict compatibility requirements.

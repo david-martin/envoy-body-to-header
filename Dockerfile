@@ -1,4 +1,4 @@
-# Dockerfile for building Envoy with the body-to-header dynamic module
+# Dockerfile for building Envoy with the body-based routing dynamic module
 
 ##### Build the Rust library #####
 

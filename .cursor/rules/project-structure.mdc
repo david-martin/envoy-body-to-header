@@ -1,0 +1,33 @@
+---
+alwaysApply: true
+---
+
+# Envoy Body-Based Routing Dynamic Module
+
+This is a **production-ready** Rust-based Envoy dynamic module for body-based routing.
+
+## Core Concept
+Routes HTTP requests to different upstream clusters by analyzing JSON request body content. The module pauses header processing, buffers complete request bodies, analyzes JSON for routing decisions, and sets the `x-route-to` header.
+
+## Project Structure
+
+- [src/lib.rs](mdc:src/lib.rs) - Main module entry point, registers filters
+- [src/body_based_routing.rs](mdc:src/body_based_routing.rs) - **Core filter logic** (production-ready, minimal)
+- [Cargo.toml](mdc:Cargo.toml) - Rust project config with Envoy SDK dependency  
+- [envoy.yaml](mdc:envoy.yaml) - Envoy configuration with dynamic module setup
+- [docker-compose.yml](mdc:docker-compose.yml) - Test environment (Envoy + 2 echo servers)
+- [Dockerfile](mdc:Dockerfile) - Multi-arch build for Envoy + Rust module
+- [README.md](mdc:README.md) - Minimal quick-start guide
+
+## Key Technical Details
+
+**Routing Logic**: Method contains "echo2" → route to echo2, else → route to echo1 (default)
+
+**Critical Flow**:
+1. `on_request_headers` - Returns `StopIteration` to pause routing decisions
+2. `on_request_body` - Returns `StopIterationAndBuffer` to buffer complete body
+3. Body analysis - Parse JSON, set `x-route-to` header  
+4. `clear_route_cache()` - Force Envoy to re-evaluate routing
+5. `Continue` - Resume with dynamic routing
+
+**Memory/Performance**: Buffers complete request bodies, JSON parsing overhead, route cache clearing cost.

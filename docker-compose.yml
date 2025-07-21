@@ -1,10 +1,35 @@
 version: '3.8'
 
 services:
-  httpbin:
-    image: kennethreitz/httpbin
+  echo1:
+    image: ealen/echo-server:latest
     ports:
-      - "8081:80"
+      - "8001:80"
+    environment:
+      - PORT=80
+      - LOGS=true
+    # Health check disabled to reduce log noise
+    # healthcheck:
+    #   test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 5s
+
+  echo2:
+    image: ealen/echo-server:latest
+    ports:
+      - "8002:80"
+    environment:
+      - PORT=80
+      - LOGS=true
+    # Health check disabled to reduce log noise
+    # healthcheck:
+    #   test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 5s
 
   envoy:
     build: .
@@ -15,6 +40,7 @@ services:
       - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
     command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
     depends_on:
-      - httpbin
+      - echo1
+      - echo2
     environment:
       - ENVOY_DYNAMIC_MODULES_SEARCH_PATH=/usr/local/lib 
